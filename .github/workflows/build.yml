@@ -111,7 +111,7 @@ jobs:
           mkdir -p pkg
           cp "patcher/$OUT" pkg/
           cp patcher/README.md pkg/README-patcher.md
-          cp README.md LICENSE NOTICE pkg/
+          cp NOTICE pkg/
           # Third-party licence texts for what the patcher (and the CIA inside it) contains
           mkdir -p pkg/licenses
           cp game/Loz/LICENSE.txt pkg/licenses/Loz-Apache-2.0.txt
