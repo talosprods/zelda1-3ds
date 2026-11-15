@@ -37,13 +37,17 @@ jobs:
       - name: Build .3dsx
         run: make -C game/zelda3ds -j"$(nproc)"
 
-      - name: Fetch makerom, build bannertool
+      - name: Build makerom and bannertool
         run: |
           mkdir -p game/zelda3ds/tools/bin
-          curl -fsSL -o /tmp/makerom.zip \
-            "https://github.com/3DSGuy/Project_CTR/releases/download/makerom-${MAKEROM_VERSION}/makerom-${MAKEROM_VERSION}-ubuntu_x86_64.zip"
-          unzip -o /tmp/makerom.zip -d /tmp/makerom
-          find /tmp/makerom -type f -name makerom -exec cp {} game/zelda3ds/tools/bin/makerom \;
+          # makerom from source: the prebuilt Linux release needs a newer
+          # glibc than the devkitARM container has.
+          curl -fsSL -o /tmp/ctr.tar.gz \
+            "https://github.com/3DSGuy/Project_CTR/archive/refs/tags/makerom-${MAKEROM_VERSION}.tar.gz"
+          mkdir -p /tmp/ctr && tar -xzf /tmp/ctr.tar.gz -C /tmp/ctr --strip-components=1
+          make -C /tmp/ctr/makerom deps -j"$(nproc)"
+          make -C /tmp/ctr/makerom -j"$(nproc)"
+          find /tmp/ctr/makerom -type f -name makerom -perm -u+x -exec cp {} game/zelda3ds/tools/bin/makerom \;
           chmod +x game/zelda3ds/tools/bin/makerom
           cmake -S game/zelda3ds/tools/bannertool-src -B /tmp/bannertool -DCMAKE_BUILD_TYPE=Release
           cmake --build /tmp/bannertool -j"$(nproc)"
