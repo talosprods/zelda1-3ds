@@ -1,0 +1,49 @@
+The Legend of Zelda: 3DS Edition
+Copyright 2026 The zelda1-3ds contributors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+It is a modified version of Loz:
+
+  Loz
+  Copyright (c) 2016 Aldo J. Nunez
+  https://github.com/aldonunez/Loz
+  Licensed under the Apache License, Version 2.0.
+
+Modifications include a Nintendo 3DS platform layer (game/zelda3ds/source), a
+live bottom-screen map, stereoscopic rendering, gameplay/quality-of-life
+additions, and a C++ port of Loz's asset extractor (ExtractLoz, C#) that runs
+on the console and in the PC patcher (patcher/). patcher/data/ holds Loz's
+extractor data tables, unchanged. Files under game/Loz/ that were changed
+for this port say so in their header ("Modified for The Legend of Zelda:
+3DS Edition").
+
+Third-party components with their own licenses:
+
+  Game_Music_Emu (game/Loz/Tools/ExtractNsf/Game_Music_Emu)
+    Copyright (C) Shay Green. GNU Lesser General Public License 2.1;
+    full text in that directory's license.txt.
+
+  bannertool (game/zelda3ds/tools/bannertool-src), build tool only
+    Copyright (C) 2015-2017 Steveice10, (C) 2024-2026 carstene1ns. MIT
+    License, see game/zelda3ds/tools/bannertool-src/LICENSE.txt. Carries one local
+    patch (source/3ds/lz11.cpp).
+
+  FBI banner model (banner_3ds.cgfx), not stored in this repository
+    Copyright (C) 2015-2019 Steveice10, MIT License,
+    https://github.com/Steveice10/FBI (commit ec259153e25fc77ee999b8caadac7e73d2e5e41a).
+    Downloaded at CIA build time and used, with its textures and geometry
+    replaced, as the 3D HOME-menu banner of the CIA. The MIT licence text is
+    included in the release packages.
+
+  makerom (Project_CTR), build tool; RomFS layout followed by the patcher
+    Copyright (c) 2014 3DSGuy, (c) 2014 applestash, (c) 2015-2022 Jakcron.
+    MIT License, see patcher/LICENSE-makerom.txt. patcher/src/patch_core.cpp
+    builds the RomFS and IVFC hash tree the same way as makerom's
+    romfs_gen.c, so its output matches makerom's byte for byte.
+
+Not included: any Nintendo code, graphics, music, text or level data. The
+game extracts those at runtime from a ROM supplied by the player. "The Legend
+of Zelda", the Triforce, Nintendo, NES and Nintendo 3DS are trademarks of
+Nintendo; this project is not affiliated with or
+endorsed by Nintendo.

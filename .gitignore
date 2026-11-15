@@ -1,0 +1,54 @@
+# Game ROMs are never part of this repository.
+*.nes
+*.NES
+*.nsf
+*.NSF
+*.fds
+*.FDS
+*.CIA
+*.3DSX
+
+# Build output
+/game/zelda3ds/build/
+*.o
+*.elf
+*.3dsx
+*.cia
+*.smdh
+*.bnr
+*.map
+/dist/
+
+# Build tools fetched/built locally (see README)
+/game/zelda3ds/tools/bin/
+/game/zelda3ds/tools/bannertool-src/build/
+/patcher/romextract
+
+# Fetched at CIA build time (FBI, MIT, see NOTICE) and generated banner models
+/game/zelda3ds/cia-assets/fbi_banner_base.cgfx
+/game/zelda3ds/cia-assets/spinning_banner.cgfx
+/game/zelda3ds/cia-assets/tetra.cgfx
+/game/zelda3ds/cia-assets/_tf_*
+*.cgfx
+
+# Intermediate outputs of tools/gen-woodgrain.py (the game uses romfs/woodgrain.t3x)
+/game/zelda3ds/romfs/woodgrain.bin
+/game/zelda3ds/cia-assets/woodgrain_preview.png
+
+# CI / web-patcher work output
+/pkg/
+/base/
+*.zip
+zelda3ds-patcher.js
+*.wasm
+
+# Editors and OS files
+.vscode/
+*.swp
+Thumbs.db
+
+.DS_Store
+__pycache__/
+/patcher/zelda3ds-patcher
+/patcher/zelda3ds-patcher.exe
+/site/

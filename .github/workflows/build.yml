@@ -1,0 +1,198 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write   # only used to attach files to a release on a v* tag
+
+jobs:
+  # The game itself, without any Nintendo data. These two files are also the
+  # "ROM on the SD card" downloads, and the base the patcher builds on.
+  game:
+    runs-on: ubuntu-latest
+    container: devkitpro/devkitarm:latest
+    env:
+      DEVKITPRO: /opt/devkitpro
+      DEVKITARM: /opt/devkitpro/devkitARM
+      MAKEROM_VERSION: v0.19.0
+      FBI_COMMIT: ec259153e25fc77ee999b8caadac7e73d2e5e41a
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Host tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends cmake g++ make unzip zip curl ca-certificates python3 python3-pil
+
+      - name: Unit tests and ROM extractor (host build)
+        run: |
+          game/zelda3ds/tests/run.sh
+          patcher/build-romextract.sh
+
+      - name: Build .3dsx
+        run: make -C game/zelda3ds -j"$(nproc)"
+
+      - name: Fetch makerom, build bannertool
+        run: |
+          mkdir -p game/zelda3ds/tools/bin
+          curl -fsSL -o /tmp/makerom.zip \
+            "https://github.com/3DSGuy/Project_CTR/releases/download/makerom-${MAKEROM_VERSION}/makerom-${MAKEROM_VERSION}-ubuntu_x86_64.zip"
+          unzip -o /tmp/makerom.zip -d /tmp/makerom
+          find /tmp/makerom -type f -name makerom -exec cp {} game/zelda3ds/tools/bin/makerom \;
+          chmod +x game/zelda3ds/tools/bin/makerom
+          cmake -S game/zelda3ds/tools/bannertool-src -B /tmp/bannertool -DCMAKE_BUILD_TYPE=Release
+          cmake --build /tmp/bannertool -j"$(nproc)"
+          find /tmp/bannertool -type f -name bannertool -perm -u+x -exec cp {} game/zelda3ds/tools/bin/bannertool \;
+          # FBI's banner model (MIT), base for the 3D HOME-menu banner; not
+          # stored in this repository, see NOTICE. Pinned to one commit.
+          curl -fsSL -o game/zelda3ds/cia-assets/fbi_banner_base.cgfx \
+            "https://raw.githubusercontent.com/Steveice10/FBI/${FBI_COMMIT}/meta/banner_3ds.cgfx"
+
+      - name: Build .cia
+        run: CIA_OUT="$PWD/zelda3ds.cia" game/zelda3ds/tools/build-cia.sh
+
+      - name: Collect
+        run: |
+          mkdir -p dist
+          cp game/zelda3ds/zelda3ds.3dsx dist/zelda3ds-load-rom-from-sd.3dsx
+          cp zelda3ds.cia          dist/zelda3ds-load-rom-from-sd.cia
+          ls -la dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: game
+          path: dist/
+
+  # The PC patcher, with the base builds above embedded.
+  patcher:
+    needs: game
+    strategy:
+      matrix:
+        include:
+          - name: linux
+            os: ubuntu-latest
+          - name: windows
+            os: ubuntu-latest        # cross-compiled with MinGW
+          - name: macos
+            os: macos-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: game
+          path: base
+
+      - name: MinGW
+        if: matrix.name == 'windows'
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends g++-mingw-w64-x86-64
+
+      - name: Build
+        shell: bash
+        run: |
+          BASE_CIA="$PWD/base/zelda3ds-load-rom-from-sd.cia"
+          BASE_3DSX="$PWD/base/zelda3ds-load-rom-from-sd.3dsx"
+          case "${{ matrix.name }}" in
+            linux)   OUT=zelda3ds-patcher CXXFLAGS="-static" ;;
+            windows) OUT=zelda3ds-patcher.exe CXX=x86_64-w64-mingw32-g++ CXXFLAGS="-static -D__USE_MINGW_ANSI_STDIO=1" ;;
+            macos)   OUT=zelda3ds-patcher CXXFLAGS="-arch arm64 -arch x86_64" ;;
+          esac
+          export OUT CXX CXXFLAGS
+          patcher/build-patcher.sh "$BASE_CIA" "$BASE_3DSX"
+          mkdir -p pkg
+          cp "patcher/$OUT" pkg/
+          cp patcher/README.md pkg/README-patcher.md
+          cp README.md LICENSE NOTICE pkg/
+          # Third-party licence texts for what the patcher (and the CIA inside it) contains
+          mkdir -p pkg/licenses
+          cp game/Loz/LICENSE.txt pkg/licenses/Loz-Apache-2.0.txt
+          cp game/Loz/Tools/ExtractNsf/Game_Music_Emu/license.txt pkg/licenses/Game_Music_Emu-LGPL-2.1.txt
+          cp patcher/LICENSE-makerom.txt pkg/licenses/makerom-MIT.txt
+          cp game/zelda3ds/tools/bannertool-src/LICENSE.txt pkg/licenses/bannertool-MIT.txt
+          curl -fsSL -o pkg/licenses/FBI-banner-MIT.txt \
+            "https://raw.githubusercontent.com/Steveice10/FBI/ec259153e25fc77ee999b8caadac7e73d2e5e41a/LICENSE.txt"
+          (cd pkg && zip -r "../zelda3ds-patcher-${{ matrix.name }}.zip" .)
+
+      - name: Smoke test (no ROM -> usage, exit 2)
+        if: matrix.name != 'windows'
+        shell: bash
+        run: |
+          set +e
+          patcher/zelda3ds-patcher --help; code=$?
+          test "$code" = 2
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: patcher-${{ matrix.name }}
+          path: zelda3ds-patcher-${{ matrix.name }}.zip
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [game, patcher]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            out/zelda3ds-patcher-windows.zip
+            out/zelda3ds-patcher-macos.zip
+            out/zelda3ds-patcher-linux.zip
+            out/zelda3ds-load-rom-from-sd.cia
+            out/zelda3ds-load-rom-from-sd.3dsx
+
+  # The website (docs/) with the in-browser patcher, deployed to GitHub Pages
+  # for every release. The patcher is patcher/src compiled to WebAssembly; the
+  # asset-free game builds from the `game` job go next to it in base/. Neither
+  # is stored in the repository. One-time setup: Settings -> Pages -> Source:
+  # GitHub Actions.
+  site:
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    needs: game
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    env:
+      EMSDK_VERSION: 7.0.0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: game
+          path: base
+
+      - name: Emscripten
+        run: |
+          git clone --depth 1 https://github.com/emscripten-core/emsdk.git "$RUNNER_TEMP/emsdk"
+          "$RUNNER_TEMP/emsdk/emsdk" install "$EMSDK_VERSION"
+          "$RUNNER_TEMP/emsdk/emsdk" activate "$EMSDK_VERSION"
+
+      - name: Assemble site
+        run: |
+          source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
+          mkdir -p site/base
+          cp -r docs/. site/
+          patcher/build-web.sh "$PWD/site/patcher"
+          cp base/zelda3ds-load-rom-from-sd.cia base/zelda3ds-load-rom-from-sd.3dsx site/base/
+          ls -laR site
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4
+

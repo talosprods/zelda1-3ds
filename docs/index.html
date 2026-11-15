@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Legend of Zelda: 3DS Edition</title>
+<meta name="description" content="An unofficial native port of the original NES Legend of Zelda to the New Nintendo 3DS, with a live map on the bottom screen and stereoscopic 3D. Bring your own ROM.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #15100b;
+    --bg-2: #1d160f;
+    --panel: #251b12;
+    --panel-2: #2e2216;
+    --line: #4a3824;
+    --gold: #d9ae4f;
+    --gold-soft: #b08a3a;
+    --cream: #f2e5c6;
+    --text: #e9dcc0;
+    --muted: #b3a283;
+    --water: #3e6fa6;
+    --forest: #3f7a3c;
+    --ground: #58944e;
+    --mountain: #8a6e52;
+    --sand: #c7b078;
+    --ok: #7fc06f;
+    --bad: #e07a5f;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(217,174,79,.12), transparent 60%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.012) 0 2px, transparent 2px 7px),
+      var(--bg);
+    color: var(--text);
+    font: 16px/1.6 Inter, system-ui, -apple-system, Segoe UI, sans-serif;
+  }
+  a { color: var(--gold); }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+  .pixel { font-family: "Press Start 2P", monospace; letter-spacing: .02em; }
+
+  /* Nav */
+  nav { position: sticky; top: 0; z-index: 10; backdrop-filter: blur(8px);
+        background: rgba(21,16,11,.78); border-bottom: 1px solid var(--line); }
+  nav .wrap { display: flex; align-items: center; gap: 22px; height: 58px; }
+  nav .brand { display: flex; align-items: center; gap: 10px; color: var(--cream);
+               text-decoration: none; font-size: 11px; }
+  nav .links { margin-left: auto; display: flex; gap: 20px; font-size: 14px; }
+  nav .links a { color: var(--muted); text-decoration: none; }
+  nav .links a:hover { color: var(--cream); }
+  .tri { width: 22px; height: 19px; }
+
+  /* Hero */
+  .hero { padding: 64px 0 40px; }
+  .hero .wrap { display: grid; grid-template-columns: 1.05fr 1fr; gap: 48px; align-items: center; }
+  .eyebrow { color: var(--gold); font-size: 10px; margin-bottom: 18px; }
+  h1 { font-size: clamp(22px, 3.4vw, 34px); line-height: 1.45; color: var(--cream); margin: 0 0 22px; }
+  h1 span { color: var(--gold); }
+  .lead { font-size: 18px; color: var(--text); max-width: 34em; margin: 0 0 28px; }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; }
+  .btn { display: inline-flex; align-items: center; gap: 10px; padding: 13px 20px; border-radius: 10px;
+         font-weight: 600; text-decoration: none; border: 1px solid var(--gold); transition: transform .12s, background .12s; }
+  .btn:hover { transform: translateY(-1px); }
+  .btn.primary { background: var(--gold); color: #20170c; }
+  .btn.primary:hover { background: #e6bd60; }
+  .btn.ghost { color: var(--cream); background: transparent; border-color: var(--line); }
+  .btn.ghost:hover { border-color: var(--gold); }
+  .note { color: var(--muted); font-size: 13px; margin-top: 16px; }
+
+  /* Device */
+  .photo { margin: 0 auto; max-width: 440px; }
+  .hero .wrap:not(:has(.photo:not([hidden]))) { grid-template-columns: minmax(0, 760px); }
+  .photo img { width: 100%; height: auto; display: block;
+               filter: drop-shadow(0 0 1.5px rgba(255,255,255,.45)) drop-shadow(0 0 22px rgba(217,174,79,.22)) drop-shadow(0 30px 40px rgba(0,0,0,.5)); }
+  .photo figcaption { margin-top: 6px; text-align: center; font-size: 11.5px; color: var(--muted); }
+  .photo figcaption a { color: var(--muted); }
+
+  /* Sections */
+  section { padding: 56px 0; scroll-margin-top: 58px; }
+  h2 { font-size: 16px; color: var(--cream); margin: 0 0 10px; line-height: 1.6; }
+  .sub { color: var(--muted); margin: 0 0 32px; max-width: 46em; }
+
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .card { background: linear-gradient(180deg, var(--panel), var(--bg-2)); border: 1px solid var(--line);
+          border-radius: var(--radius); padding: 22px; }
+  .card h3 { margin: 10px 0 6px; font-size: 16px; color: var(--cream); }
+  .card p { margin: 0; color: var(--muted); font-size: 14.5px; }
+  .ico { width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center;
+         background: rgba(217,174,79,.12); border: 1px solid rgba(217,174,79,.35); }
+  .ico svg { width: 20px; height: 20px; }
+
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .compare .card ul { margin: 12px 0 0; padding-left: 18px; color: var(--text); font-size: 14.5px; }
+  .compare .card li { margin: 4px 0; }
+  .compare .card.them { opacity: .82; }
+  .tag { display: inline-block; font-size: 9px; padding: 5px 8px; border-radius: 6px;
+         background: var(--panel-2); border: 1px solid var(--line); color: var(--muted); }
+  .tag.gold { color: #20170c; background: var(--gold); border-color: var(--gold); }
+
+  /* Two routes */
+  .routes { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .route { position: relative; }
+  .route .badge { position: absolute; top: -11px; right: 18px; }
+  .route h3 { font-size: 18px; }
+  ol.steps { counter-reset: s; list-style: none; padding: 0; margin: 16px 0 18px; }
+  ol.steps li { counter-increment: s; position: relative; padding-left: 40px; margin: 12px 0; font-size: 14.5px; }
+  ol.steps li::before { content: counter(s); position: absolute; left: 0; top: -1px; width: 26px; height: 26px;
+         border-radius: 50%; display: grid; place-items: center; font: 600 13px Inter, sans-serif;
+         background: var(--panel-2); border: 1px solid var(--gold-soft); color: var(--gold); }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .9em;
+         background: rgba(0,0,0,.35); border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; color: var(--cream); }
+  .dl { display: flex; flex-wrap: wrap; gap: 8px; }
+  .dl .btn { padding: 10px 14px; font-size: 14px; }
+  .dl .btn.suggested { background: var(--gold); color: #20170c; }
+
+  /* ROM checker */
+  .checker { display: grid; grid-template-columns: 1.1fr 1fr; gap: 18px; align-items: stretch; }
+  .drop { border: 2px dashed var(--line); border-radius: var(--radius); padding: 28px; text-align: center;
+          background: rgba(0,0,0,.18); cursor: pointer; transition: border-color .15s, background .15s;
+          display: grid; place-items: center; min-height: 200px; }
+  .drop.over { border-color: var(--gold); background: rgba(217,174,79,.07); }
+  .drop strong { color: var(--cream); }
+  .result { margin-top: 12px; font-weight: 600; min-height: 1.6em; }
+  .result.ok { color: var(--ok); }
+  .result.bad { color: var(--bad); }
+  table.specs { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.specs td { padding: 9px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.specs td:first-child { color: var(--muted); width: 44%; padding-right: 12px; }
+
+  /* FAQ */
+  details { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; margin: 10px 0; }
+  details summary { cursor: pointer; font-weight: 600; color: var(--cream); }
+  details p { color: var(--muted); margin: 10px 0 0; font-size: 14.5px; }
+
+  footer { border-top: 1px solid var(--line); padding: 36px 0 60px; color: var(--muted); font-size: 13.5px; }
+  footer .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 30px; }
+  footer p { margin: 0 0 10px; }
+
+  @media (max-width: 860px) {
+    .hero .wrap, .routes, .checker, .compare, footer .wrap { grid-template-columns: 1fr; }
+    .features { grid-template-columns: 1fr 1fr; }
+    nav .links { display: none; }
+    .hero { padding-top: 36px; }
+  }
+  @media (max-width: 540px) { .features { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand pixel" href="#">
+      <svg class="tri" viewBox="0 0 22 19" aria-hidden="true"><g fill="#d9ae4f"><path d="M11 0l5.5 9.5h-11z"/><path d="M5.5 9.5L11 19H0z"/><path d="M16.5 9.5L22 19H11z"/></g></svg>
+      ZELDA: 3DS EDITION
+    </a>
+    <div class="links">
+      <a href="#features">Features</a>
+      <a href="#make">Make your game</a>
+      <a href="#install">Other ways</a>
+      <a href="#faq">FAQ</a>
+      <a class="repo-link" href="#">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div>
+      <div class="eyebrow pixel">NATIVE PORT &middot; NEW 3DS</div>
+      <h1 class="pixel">The Legend of Zelda,<br><span>on two screens.</span></h1>
+      <p class="lead">The 1986 classic runs natively on your 3DS, not in an emulator. The game plays on the top screen. A live map of Hyrule fills in on the bottom screen as you explore, and stereoscopic 3D gives the world depth.</p>
+      <div class="cta">
+        <a class="btn primary" href="#make">Make your game</a>
+        <a class="btn ghost repo-link" href="#">Source on GitHub</a>
+      </div>
+      <p class="note">Bring your own ROM: it is turned into the 3DS game right here in your browser. No Nintendo files are included or downloaded.</p>
+    </div>
+    <!-- Hero image: only a genuine straight-on front photo of a 3DS
+         (docs/img/hero.webp). Without it the hero is text only. -->
+    <figure class="photo" id="hero-photo" hidden>
+      <img src="img/hero.webp" alt="The game on a New Nintendo 3DS XL" onload="this.parentNode.hidden=false" onerror="this.parentNode.remove()">
+    </figure>
+  </div>
+</header>
+
+<section id="features">
+  <div class="wrap">
+    <h2 class="pixel">What it adds</h2>
+    <p class="sub">The game is the original you remember. Everything around it was built for the 3DS: the help that was once in the paper manual and the playground rumours is now on the bottom screen.</p>
+    <div class="features">
+      <div class="card"><div class="ico"><svg viewBox="0 0 20 20" fill="none" stroke="#d9ae4f" stroke-width="1.6"><path d="M2 5l5-2 6 2 5-2v12l-5 2-6-2-5 2z"/><path d="M7 3v12M13 5v12"/></svg></div>
+        <h3>Live dual-screen map</h3><p>The overworld and dungeons, drawn with real terrain. Shops, fairies, caves and secrets appear once you have found them. Tap to zoom and place your own pins.</p></div>
+      <div class="card"><div class="ico"><svg viewBox="0 0 20 20" fill="none" stroke="#d9ae4f" stroke-width="1.6"><rect x="2" y="9" width="16" height="8" rx="1"/><rect x="5" y="5" width="10" height="5" rx="1"/><rect x="8" y="2" width="4" height="4" rx="1"/></svg></div>
+        <h3>Stereoscopic 3D</h3><p>Three depth layers: the ground, then characters and trees, then projectiles. Slide the 3D slider and Hyrule gets depth.</p></div>
+      <div class="card"><div class="ico"><svg viewBox="0 0 20 20" fill="none" stroke="#d9ae4f" stroke-width="1.6"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="11" y="3" width="6" height="6" rx="1"/><rect x="3" y="11" width="6" height="6" rx="1"/><rect x="11" y="11" width="6" height="6" rx="1"/></svg></div>
+        <h3>Touch items, two buttons</h3><p>Equip items on the touch screen and use a second item button. No more pausing to swap.</p></div>
+      <div class="card"><div class="ico"><svg viewBox="0 0 20 20" fill="none" stroke="#d9ae4f" stroke-width="1.6"><path d="M4 3h9l3 3v11H4z"/><path d="M7 3v5h6V3M7 17v-5h6v5"/></svg></div>
+        <h3>Autosave &amp; save slots</h3><p>Autosave, a modern continue screen, and three save slots you can copy and delete. Quest 1 and Quest 2 are both selectable.</p></div>
+      <div class="card"><div class="ico"><svg viewBox="0 0 20 20" fill="none" stroke="#d9ae4f" stroke-width="1.6"><path d="M4 3h10a2 2 0 012 2v12H6a2 2 0 01-2-2z"/><path d="M4 15a2 2 0 012-2h10"/></svg></div>
+        <h3>Manual &amp; achievements</h3><p>A built-in manual that fills in as you progress, plus per-save statistics and a music player.</p></div>
+      <div class="card"><div class="ico"><svg viewBox="0 0 20 20" fill="none" stroke="#d9ae4f" stroke-width="1.6"><rect x="2" y="4" width="16" height="11" rx="2"/><path d="M7 18h6"/></svg></div>
+        <h3>Clean picture, 60 fps</h3><p>Sharp, CRT-correct scaling with the original 8:7 pixel shape. The NES sound is synthesized live from the game's own music data. Full speed on the New 3DS.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2 class="pixel">Original vs. 3DS Edition</h2>
+    <p class="sub">Same game, same maps, same secrets. The difference is how much you have to keep in your head.</p>
+    <div class="compare">
+      <div class="card them"><span class="tag pixel">NES, 1986</span>
+        <ul><li>One screen: you draw your own map on paper</li><li>Pause and dig through a menu to swap your B item</li><li>Game over sends you back to the start</li><li>Secrets: guess, bomb, burn, repeat</li><li>Flat 2D</li></ul></div>
+      <div class="card"><span class="tag gold pixel">3DS EDITION</span>
+        <ul><li>A live map with real terrain on the second screen</li><li>Touch to equip, plus a second item button</li><li>Autosave and a continue screen that respects your time</li><li>Found secrets stay marked; the counter shows how many are left</li><li>Stereoscopic depth layers</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<section id="make">
+  <div class="wrap">
+    <h2 class="pixel">Make your game</h2>
+    <p class="sub">Drop your own copy of <strong style="color:var(--cream)">The Legend of Zelda (USA)</strong>, the first release (PRG0), and get the finished 3DS game. Everything happens in your browser: the ROM is never uploaded, and nothing of Nintendo's is downloaded.</p>
+    <div class="checker">
+      <label class="drop" id="drop">
+        <input type="file" id="romfile" accept=".nes,.NES" hidden>
+        <div>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d9ae4f" stroke-width="1.5" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>
+          <p style="margin:10px 0 0"><strong>Drop your .nes file</strong> or click to choose</p>
+          <div class="result" id="result" aria-live="polite"></div>
+          <div class="dl" id="outputs" style="justify-content:center;margin-top:14px" hidden>
+            <a class="btn primary" id="out-cia" download="zelda3ds.cia" href="#">Download zelda3ds.cia</a>
+            <a class="btn ghost" id="out-3dsx" download="zelda3ds.3dsx" href="#">zelda3ds.3dsx</a>
+          </div>
+        </div>
+      </label>
+      <div class="card">
+        <table class="specs">
+          <tr><td>Game</td><td>The Legend of Zelda (USA), first release (PRG0)</td></tr>
+          <tr><td>Usual file name</td><td><code>Legend of Zelda, The (USA).nes</code><br><span style="color:var(--muted)">or <code>(U) (PRG0)</code></span></td></tr>
+          <tr><td>Not supported</td><td><code>(USA) (Rev 1)</code> / <code>(U) (PRG1)</code>, Europe, Japan, re-releases, hacks</td></tr>
+          <tr><td>CRC-32</td><td><code>D7AE93DF</code> with header<br><code>3FE272FB</code> without header</td></tr>
+        </table>
+        <ol class="steps" style="margin-bottom:0">
+          <li>Copy <code>zelda3ds.cia</code> to your SD card and install it with FBI.</li>
+          <li>Start it from the HOME menu. Prefer the Homebrew Launcher? Put <code>zelda3ds.3dsx</code> in <code>sd:/3ds/zelda3ds/</code>.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <h2 class="pixel">Other ways to play</h2>
+    <p class="sub">All of them give you the same game. You need a 3DS with custom firmware (<a href="https://3ds.hacks.guide/" rel="noopener">3ds.hacks.guide</a>).</p>
+    <div class="routes">
+      <div class="card route">
+        <h3>Patch on your PC</h3>
+        <p style="color:var(--muted);margin:0;font-size:14.5px">The same patcher as above, as a program for your computer. It gives byte-identical files.</p>
+        <ol class="steps">
+          <li>Download the patcher for your computer.</li>
+          <li>Drag your <code>.nes</code> file onto it, or run <code>zelda3ds-patcher your-rom.nes</code>. You get <code>zelda3ds.cia</code> and <code>zelda3ds.3dsx</code> next to the ROM.</li>
+        </ol>
+        <div class="dl" id="dl-patcher">
+          <a class="btn ghost" data-os="windows" data-asset="zelda3ds-patcher-windows.zip" href="#">Windows</a>
+          <a class="btn ghost" data-os="mac" data-asset="zelda3ds-patcher-macos.zip" href="#">macOS</a>
+          <a class="btn ghost" data-os="linux" data-asset="zelda3ds-patcher-linux.zip" href="#">Linux</a>
+        </div>
+        <p class="note">macOS may say the app is from an unidentified developer. Right-click it and choose Open the first time.</p>
+      </div>
+      <div class="card route">
+        <h3>ROM on the SD card</h3>
+        <p style="color:var(--muted);margin:0;font-size:14.5px">No patching at all: the game reads your ROM itself, on the console.</p>
+        <ol class="steps">
+          <li>Download the game below and install the <code>.cia</code> with FBI. Or copy the <code>.3dsx</code> to <code>sd:/3ds/zelda3ds/</code> for the Homebrew Launcher.</li>
+          <li>Put your ROM in <code>sd:/3ds/zelda3ds/</code>. Any name works, as long as it ends in <code>.nes</code>.</li>
+          <li>Start the game. It builds its graphics, maps and music from the ROM in memory at every start.</li>
+        </ol>
+        <div class="dl">
+          <a class="btn ghost" href="base/zelda3ds-load-rom-from-sd.cia" download>.cia (HOME menu)</a>
+          <a class="btn ghost" href="base/zelda3ds-load-rom-from-sd.3dsx" download>.3dsx (Homebrew Launcher)</a>
+        </div>
+        <p class="note">If the ROM is missing or the wrong version, the game tells you exactly what is wrong.</p>
+      </div>
+    </div>
+    <p class="note" id="release-line">PC patcher downloads come from the latest GitHub release.</p>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <h2 class="pixel">FAQ</h2>
+    <details><summary>Is this an emulator?</summary><p>No. It is a C++ reimplementation of the game (Aldo Nunez's <a href="https://github.com/aldonunez/Loz" rel="noopener">Loz</a> remake) compiled for the 3DS, with a 3DS renderer, sound and input layer, and new features on top.</p></details>
+    <details><summary>Why do I need my own ROM?</summary><p>So that nothing of Nintendo's is distributed. The graphics, maps, text and music come out of your own copy, either on your PC (the patcher) or on the console. Please dump it from a cartridge you own.</p></details>
+    <details><summary>Does it work on an original (old) 3DS?</summary><p>It is built to hold 60 fps at the old 3DS clock speed, and it is tested at that speed. Most testing happened on a New 3DS XL.</p></details>
+    <details><summary>Where are my saves?</summary><p>In <code>sd:/3ds/zelda3ds/</code>, together with your map progress. The CIA and the .3dsx use the same saves, so you can switch between them.</p></details>
+    <details><summary>I have the Rev 1 / PRG1 ROM.</summary><p>That later revision stores its data at different places in the ROM and is not supported (yet). The checker above, the patcher and the game itself all tell you which one you have.</p></details>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <p><strong style="color:var(--cream)">The Legend of Zelda: 3DS Edition</strong> is a non-commercial fan project. It is not affiliated with, endorsed by, or connected to Nintendo. <em>The Legend of Zelda</em>, the Triforce, Nintendo, NES and Nintendo 3DS are trademarks of Nintendo. No copyrighted game data is distributed.</p>
+      <p>Built on <a href="https://github.com/aldonunez/Loz" rel="noopener">Loz</a> by Aldo J. Nunez (Apache-2.0) and Game_Music_Emu by Shay Green (LGPL-2.1).</p>
+    </div>
+    <div>
+      <p><a class="repo-link" href="#">Source code &amp; releases on GitHub</a></p>
+      <p>Licensed under Apache-2.0; see LICENSE and NOTICE in the repository.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Repository the downloads and links point at, as "owner/name".
+  // The GitHub repository the download and source links point to.
+  const REPO = "talosprods/zelda1-3ds";
+  const repoUrl = REPO ? "https://github.com/" + REPO : "#";
+  const assetUrl = name => REPO ? repoUrl + "/releases/latest/download/" + name : "#";
+
+  document.querySelectorAll(".repo-link").forEach(a => a.href = repoUrl);
+  document.querySelectorAll("[data-asset]").forEach(a => a.href = assetUrl(a.dataset.asset));
+  if (!REPO) document.getElementById("release-line").textContent = "PC patcher downloads will appear here with the first release.";
+
+  // Highlight the patcher for this visitor's OS.
+  const ua = navigator.userAgent.toLowerCase();
+  const os = ua.includes("win") ? "windows" : ua.includes("mac") ? "mac" : ua.includes("linux") ? "linux" : null;
+  if (os) {
+    const b = document.querySelector('#dl-patcher [data-os="' + os + '"]');
+    if (b) { b.classList.add("suggested"); b.textContent += " (your system)"; }
+  }
+
+  // Show the latest release version, if the API is reachable.
+  if (REPO) fetch("https://api.github.com/repos/" + REPO + "/releases/latest")
+    .then(r => r.ok ? r.json() : null)
+    .then(rel => {
+      if (rel && rel.tag_name)
+        document.getElementById("release-line").innerHTML =
+          'Latest release: <a href="' + rel.html_url + '">' + rel.tag_name + "</a>";
+    })
+    .catch(() => {});
+
+
+  // The patcher, entirely in the browser. patcher/zelda3ds-patcher.{js,wasm}
+  // is the same C++ as the PC tool (patcher/src), compiled to WebAssembly;
+  // base/ holds the asset-free game builds it fills in. Both are put on the
+  // site by the build pipeline, not stored in the repository.
+  (function () {
+    const REQUIRED = 0x3FE272FB, REV1 = 0xEAF7ED72, PRG = 0x20000;
+    const table = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; table[n] = c >>> 0; }
+    const crc32 = b => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = table[(c ^ b[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+    const drop = document.getElementById("drop"), input = document.getElementById("romfile"), out = document.getElementById("result");
+    const outputs = document.getElementById("outputs"), ciaLink = document.getElementById("out-cia"), dsxLink = document.getElementById("out-3dsx");
+    const show = (state, msg) => { out.className = "result" + (state === true ? " ok" : state === false ? " bad" : ""); out.textContent = msg; };
+    let urls = [];
+
+    let patcher = null;
+    function loadPatcher() {
+      if (!patcher) patcher = new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = "patcher/zelda3ds-patcher.js";
+        s.onload = () => createZeldaPatcher({ locateFile: f => "patcher/" + f }).then(resolve, reject);
+        s.onerror = () => reject(new Error("the patcher could not be loaded"));
+        document.head.appendChild(s);
+      });
+      return patcher;
+    }
+    const fetchBytes = url => fetch(url).then(r => {
+      if (!r.ok) throw new Error(url + " is not available (" + r.status + ")");
+      return r.arrayBuffer();
+    }).then(b => new Uint8Array(b));
+
+    async function make(file) {
+      if (!file) return;
+      outputs.hidden = true;
+      urls.forEach(u => URL.revokeObjectURL(u)); urls = [];
+      const rom = new Uint8Array(await file.arrayBuffer());
+
+      // Quick check first, so a wrong ROM is explained instantly.
+      const hasHeader = rom.length >= 16 + PRG && rom[0] === 0x4E && rom[1] === 0x45 && rom[2] === 0x53 && rom[3] === 0x1A;
+      const prg = hasHeader ? rom.subarray(16) : rom;
+      if (prg.length !== PRG) return show(false, "This doesn't look like the Zelda NES ROM (wrong size).");
+      const crc = crc32(prg);
+      if (crc === REV1) return show(false, "This is the later Rev 1 (PRG1) release, which isn't supported. You need the first release: Legend of Zelda, The (USA).");
+      if (crc !== REQUIRED) return show(false, "Not the supported ROM (CRC-32 " + crc.toString(16).toUpperCase().padStart(8, "0") + " without header). You need Legend of Zelda, The (USA), the first release (PRG0).");
+
+      show(null, "Correct ROM. Building your game...");
+      try {
+        const [M, baseCia, base3dsx] = await Promise.all([
+          loadPatcher(),
+          fetchBytes("base/zelda3ds-load-rom-from-sd.cia"),
+          fetchBytes("base/zelda3ds-load-rom-from-sd.3dsx"),
+        ]);
+        const ptrs = [];
+        const put = b => { const p = M._malloc(b.length); M.HEAPU8.set(b, p); ptrs.push(p); return p; };
+        const ok = M._zp_patch(put(rom), rom.length, put(baseCia), baseCia.length, put(base3dsx), base3dsx.length);
+        ptrs.forEach(p => M._free(p));
+        if (!ok) return show(false, M.UTF8ToString(M._zp_error()));
+        const blob = (ptr, len) => new Blob([M.HEAPU8.slice(ptr, ptr + len)], { type: "application/octet-stream" });
+        const cia = blob(M._zp_cia(), M._zp_cia_len()), dsx = blob(M._zp_3dsx(), M._zp_3dsx_len());
+        urls = [URL.createObjectURL(cia), URL.createObjectURL(dsx)];
+        ciaLink.href = urls[0]; dsxLink.href = urls[1];
+        ciaLink.textContent = "Download zelda3ds.cia (" + (cia.size / 1048576).toFixed(1) + " MB)";
+        outputs.hidden = false;
+        show(true, "\u2713 Done: " + M._zp_file_count() + " game files built from your ROM" + (hasHeader ? "" : " (headerless)") + ".");
+      } catch (e) {
+        show(false, "Something went wrong: " + e.message + ". The PC patcher below does the same job.");
+      }
+    }
+
+    input.addEventListener("change", () => make(input.files[0]));
+    ["dragenter", "dragover"].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add("over"); }));
+    ["dragleave", "drop"].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove("over"); }));
+    drop.addEventListener("drop", ev => make(ev.dataTransfer.files[0]));
+    // Clicking a download link inside the label must not reopen the file picker.
+    outputs.addEventListener("click", ev => ev.stopPropagation());
+  })();
+</script>
+</body>
+</html>
