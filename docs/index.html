@@ -175,7 +175,6 @@
     <div class="links">
       <a href="#features">Features</a>
       <a href="#make">Make your game</a>
-      <a href="#install">Other ways</a>
       <a href="#faq">FAQ</a>
       <a class="repo-link" href="#">GitHub</a>
     </div>
@@ -279,44 +278,6 @@
   </div>
 </section>
 
-<section id="install">
-  <div class="wrap">
-    <h2 class="pixel">Other ways to play</h2>
-    <p class="sub">Same game either way. You need a 3DS with <a href="https://3ds.hacks.guide/" rel="noopener">custom firmware</a>.</p>
-    <div class="routes">
-      <div class="card route">
-        <h3>Patch on your PC</h3>
-        <p style="color:var(--muted);margin:0;font-size:14.5px">The patcher above, as a program.</p>
-        <ol class="steps">
-          <li>Download it.</li>
-          <li>Drag your <code>.nes</code> file onto it.</li>
-        </ol>
-        <div class="dl" id="dl-patcher">
-          <a class="btn ghost" data-os="windows" data-asset="zelda3ds-patcher-windows.zip" href="#">Windows</a>
-          <a class="btn ghost" data-os="mac" data-asset="zelda3ds-patcher-macos.zip" href="#">macOS</a>
-          <a class="btn ghost" data-os="linux" data-asset="zelda3ds-patcher-linux.zip" href="#">Linux</a>
-        </div>
-        <p class="note">On a Mac, right-click and choose Open the first time.</p>
-      </div>
-      <div class="card route">
-        <h3>ROM on the SD card</h3>
-        <p style="color:var(--muted);margin:0;font-size:14.5px">No patching. The game reads the ROM itself.</p>
-        <ol class="steps">
-          <li>Install the game below.</li>
-          <li>Put your ROM in <code>sd:/3ds/zelda3ds/</code>.</li>
-          <li>Start it.</li>
-        </ol>
-        <div class="dl">
-          <a class="btn ghost" href="base/zelda3ds-load-rom-from-sd.cia" download>.cia (HOME menu)</a>
-          <a class="btn ghost" href="base/zelda3ds-load-rom-from-sd.3dsx" download>.3dsx (Homebrew Launcher)</a>
-        </div>
-        <p class="note">Wrong ROM? The game will tell you.</p>
-      </div>
-    </div>
-    <p class="note" id="release-line"></p>
-  </div>
-</section>
-
 <section id="faq">
   <div class="wrap">
     <h2 class="pixel">FAQ</h2>
@@ -341,33 +302,11 @@
 </footer>
 
 <script>
-  // Repository the downloads and links point at, as "owner/name".
-  // The GitHub repository the download and source links point to.
+  // The GitHub repository the source links point to.
   const REPO = "talosprods/zelda1-3ds";
   const repoUrl = REPO ? "https://github.com/" + REPO : "#";
-  const assetUrl = name => REPO ? repoUrl + "/releases/latest/download/" + name : "#";
 
   document.querySelectorAll(".repo-link").forEach(a => a.href = repoUrl);
-  document.querySelectorAll("[data-asset]").forEach(a => a.href = assetUrl(a.dataset.asset));
-  if (!REPO) document.getElementById("release-line").textContent = "PC patcher downloads will appear here with the first release.";
-
-  // Highlight the patcher for this visitor's OS.
-  const ua = navigator.userAgent.toLowerCase();
-  const os = ua.includes("win") ? "windows" : ua.includes("mac") ? "mac" : ua.includes("linux") ? "linux" : null;
-  if (os) {
-    const b = document.querySelector('#dl-patcher [data-os="' + os + '"]');
-    if (b) { b.classList.add("suggested"); b.textContent += " (your system)"; }
-  }
-
-  // Show the latest release version, if the API is reachable.
-  if (REPO) fetch("https://api.github.com/repos/" + REPO + "/releases/latest")
-    .then(r => r.ok ? r.json() : null)
-    .then(rel => {
-      if (rel && rel.tag_name)
-        document.getElementById("release-line").innerHTML =
-          'Latest release: <a href="' + rel.html_url + '">' + rel.tag_name + "</a>";
-    })
-    .catch(() => {});
 
 
   // The patcher, entirely in the browser. patcher/zelda3ds-patcher.{js,wasm}
@@ -434,7 +373,7 @@
         outputs.hidden = false;
         show(true, "\u2713 Done. Your game is ready.");
       } catch (e) {
-        show(false, "Something went wrong (" + e.message + "). Try the PC patcher below.");
+        show(false, "Something went wrong (" + e.message + "). Try another browser.");
       }
     }
 
