@@ -81,6 +81,18 @@
   .photo figcaption { margin-top: 6px; text-align: center; font-size: 11.5px; color: var(--muted); }
   .photo figcaption a { color: var(--muted); }
 
+  /* Bottom-screen captures: native 320px wide, scaled with sharp pixels */
+  .screen { max-width: 520px; }
+  .screen img, .shot img { width: 100%; height: auto; display: block; image-rendering: pixelated;
+               border-radius: 10px; border: 1px solid var(--gold-soft); filter: none;
+               box-shadow: 0 0 0 4px var(--bg-2), 0 0 0 5px var(--line), 0 0 28px rgba(217,174,79,.18), 0 24px 40px rgba(0,0,0,.45); }
+  .screen figcaption { margin-top: 14px; font-size: 13px; }
+  .shots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .shot { margin: 0; }
+  .shot figcaption { margin-top: 14px; }
+  .shot h3 { margin: 0 0 4px; font-size: 16px; color: var(--cream); }
+  .shot p { margin: 0; color: var(--muted); font-size: 14.5px; }
+
   /* Sections */
   section { padding: 56px 0; scroll-margin-top: 58px; }
   h2 { font-size: 16px; color: var(--cream); margin: 0 0 10px; line-height: 1.6; }
@@ -143,7 +155,8 @@
   footer p { margin: 0 0 10px; }
 
   @media (max-width: 860px) {
-    .hero .wrap, .routes, .checker, .compare, footer .wrap { grid-template-columns: 1fr; }
+    .hero .wrap, .routes, .checker, .compare, .shots, footer .wrap { grid-template-columns: 1fr; }
+    .shots { max-width: 520px; }
     .features { grid-template-columns: 1fr 1fr; }
     nav .links { display: none; }
     .hero { padding-top: 36px; }
@@ -181,10 +194,12 @@
       </div>
       <p class="note">Bring your own ROM: it is turned into the 3DS game right here in your browser. No Nintendo files are included or downloaded.</p>
     </div>
-    <!-- Hero image: only a genuine straight-on front photo of a 3DS
-         (docs/img/hero.webp). Without it the hero is text only. -->
-    <figure class="photo" id="hero-photo" hidden>
-      <img src="img/hero.webp" alt="The game on a New Nintendo 3DS XL" onload="this.parentNode.hidden=false" onerror="this.parentNode.remove()">
+    <!-- Bottom-screen capture from the game (the port's own map drawing,
+         no Nintendo sprites). Images on this page show only the bottom
+         screen's own UI. -->
+    <figure class="photo screen">
+      <img src="img/overworld-map.webp" width="320" height="184" alt="The live overworld map on the bottom screen, with Link's position moving across it">
+      <figcaption>The bottom screen while you play: the overworld map, live.</figcaption>
     </figure>
   </div>
 </header>
@@ -206,6 +221,27 @@
         <h3>Manual &amp; achievements</h3><p>A built-in manual that fills in as you progress, plus per-save statistics and a music player.</p></div>
       <div class="card"><div class="ico"><svg viewBox="0 0 20 20" fill="none" stroke="#d9ae4f" stroke-width="1.6"><rect x="2" y="4" width="16" height="11" rx="2"/><path d="M7 18h6"/></svg></div>
         <h3>Clean picture, 60 fps</h3><p>Sharp, CRT-correct scaling with the original 8:7 pixel shape. The NES sound is synthesized live from the game's own music data. Full speed on the New 3DS.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="screens">
+  <div class="wrap">
+    <h2 class="pixel">The second screen</h2>
+    <p class="sub">The top screen is the game as it was. The bottom screen is new: a map that keeps up with you, and settings for how much of 1986 you want.</p>
+    <div class="shots">
+      <figure class="shot">
+        <img src="img/overworld-map.png" width="320" height="184" loading="lazy" alt="Overworld map with terrain colours, numbered dungeon entrances and coloured markers for shops, fairies and caves">
+        <figcaption><h3>Overworld</h3><p>Real terrain, numbered dungeons, and a marker for every shop, fairy and secret cave you have found.</p></figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="img/dungeon-map.png" width="320" height="184" loading="lazy" alt="Dungeon floor plan of Level 1 with visited rooms shaded and the compass target marked">
+        <figcaption><h3>Dungeons</h3><p>The floor plan of the level you are in. Rooms you have walked through are shaded, and the compass marks your goal.</p></figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="img/options.png" width="320" height="184" loading="lazy" alt="Options screen with toggles for text speed, low-HP beep, sword beam, hint text and title screen">
+        <figcaption><h3>Your rules</h3><p>Original or modern: text speed, the low-health beep, sword beam, hint text, the title screen and more.</p></figcaption>
+      </figure>
     </div>
   </div>
 </section>
