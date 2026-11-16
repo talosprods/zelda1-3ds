@@ -31,8 +31,7 @@ Third-party components with their own licenses:
     Copyright (C) 2015-2019 Steveice10, MIT License,
     https://github.com/Steveice10/FBI (commit ec259153e25fc77ee999b8caadac7e73d2e5e41a).
     Downloaded at CIA build time and used, with its textures and geometry
-    replaced, as the 3D HOME-menu banner of the CIA. The MIT licence text is
-    included in the release packages.
+    replaced, as the 3D HOME-menu banner of the CIA.
 
   makerom (Project_CTR), build tool; RomFS layout followed by the patcher
     Copyright (c) 2014 3DSGuy, (c) 2014 applestash, (c) 2015-2022 Jakcron.
